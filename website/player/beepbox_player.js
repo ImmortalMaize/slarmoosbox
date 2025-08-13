@@ -8685,6 +8685,11 @@ var beepbox = (function (exports) {
             ])
         },
         {
+            name: "Saved Presets", presets: toNameMap([
+                { name: TypePresets[0], customType: 0 }
+            ])
+        },
+        {
             name: "Retro Presets", presets: toNameMap([
                 { name: "square wave", midiProgram: 80, settings: { "type": "chip", "eqFilter": [], "effects": ["aliasing"], "transition": "interrupt", "fadeInSeconds": 0, "fadeOutTicks": -1, "chord": "arpeggio", "wave": "square", "unison": "none", "envelopes": [] } },
                 { name: "triangle wave", midiProgram: 71, settings: { "type": "chip", "eqFilter": [], "effects": ["aliasing"], "transition": "interrupt", "fadeInSeconds": 0, "fadeOutTicks": -1, "chord": "arpeggio", "wave": "triangle", "unison": "none", "envelopes": [] } },

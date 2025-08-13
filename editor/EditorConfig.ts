@@ -34,7 +34,7 @@ export class EditorConfig {
 
     public static customSamples: string[] | null;
 
-    public static readonly presetCategories: DictionaryArray<PresetCategory> = toNameMap([
+    public static presetCategories: DictionaryArray<PresetCategory> = toNameMap([
         {
             // The order of this array needs to line up with the order of the InstrumentType declarations in SynthConfig.ts. (changes.ts' random instrument generation relies on this, for one.)
             name: "Custom Instruments", presets: <DictionaryArray<Preset>>toNameMap([
@@ -49,6 +49,11 @@ export class EditorConfig {
                 { name: TypePresets[InstrumentType.supersaw], customType: InstrumentType.supersaw },
                 { name: TypePresets[InstrumentType.customChipWave], customType: InstrumentType.customChipWave },
                 { name: TypePresets[InstrumentType.fm6op], customType: InstrumentType.fm6op },
+            ])
+        },
+        {
+            name: "Saved Presets", presets: <DictionaryArray<Preset>>toNameMap([
+                { name: TypePresets[InstrumentType.chip], customType: InstrumentType.chip }
             ])
         },
         {
