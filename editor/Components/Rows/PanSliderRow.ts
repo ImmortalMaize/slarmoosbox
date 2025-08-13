@@ -7,14 +7,14 @@ import Component from "../Component";
 
 export class PanSliderRow extends Component {
     _html: HTMLDivElement;
-    get html(): HTMLDivElement {
+    get container(): HTMLDivElement {
         return this._html;
     }
     private _dropdown: HTMLButtonElement;
     private _inputBox: HTMLInputElement;
     constructor(protected editor: SongEditor) {
         super(editor, {});
-        const { div, span, input, button } = this
+        const { div, span, input, button } = this.HTML
         const { doc } = editor;
         const panSliderInputBox: HTMLInputElement = input({
             style: "width: 4em; font-size: 80%; ",
@@ -42,7 +42,7 @@ export class PanSliderRow extends Component {
         this._dropdown = panDropdown;
         this._inputBox = panSliderInputBox;
         this._html = PanSliderRow;
-        this.addSlider("pan", panSlider);
+        this._slider = panSlider;
     }
 
     get dropdown(): HTMLButtonElement {
