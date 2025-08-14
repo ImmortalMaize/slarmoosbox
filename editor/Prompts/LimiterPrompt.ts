@@ -2,11 +2,12 @@
 
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
-import { ColorConfig } from "./ColorConfig";
-import { ChangeLimiterSettings } from "./changes";
-import { SongEditor } from "./SongEditor";
-import { prettyNumber } from "./EditorConfig";
+import { SongDocument } from "../SongDocument";
+import { ColorConfig } from "../ColorConfig";
+import { ChangeLimiterSettings } from "../changes";
+import { SongEditor } from "../SongEditor";
+import { prettyNumber } from "../EditorConfig";
+import { Importable, ImportableArgs } from "./Importable";
 
 //namespace beepbox {
 const { button, div, h2, input } = HTML;
@@ -174,7 +175,9 @@ export class LimiterCanvas {
     }
 }
 
-export class LimiterPrompt implements Prompt {
+export class LimiterPrompt extends Importable implements Prompt {
+    static promptName: string = "limiterSettings";
+    static args: ImportableArgs[] = []
 
     private limiterCanvas: LimiterCanvas = new LimiterCanvas(this);
 
@@ -273,7 +276,7 @@ export class LimiterPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument, private _songEditor: SongEditor) {
-
+        super();
         this._okayButton.addEventListener("click", this._saveChanges);
         this._resetButton.addEventListener("click", this._resetDefaults);
         this._cancelButton.addEventListener("click", this._close);

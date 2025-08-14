@@ -1,15 +1,19 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
+import { Config } from "../../synth/SynthConfig";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
-import { ChangeGroup } from "./Change";
-import { ChangePatternsPerChannel, ChangeInstrumentsFlags, ChangeChannelCount } from "./changes";
+import { ChangeGroup } from "../Change";
+import { ChangePatternsPerChannel, ChangeInstrumentsFlags, ChangeChannelCount } from "../changes";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, label, br, h2, input } = HTML;
 
-export class ChannelSettingsPrompt implements Prompt {
+export class ChannelSettingsPrompt extends Importable  implements Prompt {
+    static promptName = "channelSettings"
+    static args: ImportableArgs[] = ["song"];
+    
     private readonly _patternsStepper: HTMLInputElement = input({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
     private readonly _pitchChannelStepper: HTMLInputElement = input({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
     private readonly _drumChannelStepper: HTMLInputElement = input({ style: "width: 3em; margin-left: 1em;", type: "number", step: "1" });
@@ -57,6 +61,7 @@ export class ChannelSettingsPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super();
         this._patternsStepper.value = this._doc.song.patternsPerChannel + "";
         this._patternsStepper.min = "1";
         this._patternsStepper.max = Config.barCountMax + "";

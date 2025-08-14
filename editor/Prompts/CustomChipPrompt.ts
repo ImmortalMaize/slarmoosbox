@@ -2,10 +2,11 @@
 
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
-import { ColorConfig } from "./ColorConfig";
-import { ChangeCustomWave } from "./changes";
-import { SongEditor } from "./SongEditor";
+import { SongDocument } from "../SongDocument";
+import { ColorConfig } from "../ColorConfig";
+import { ChangeCustomWave } from "../changes";
+import { SongEditor } from "../SongEditor";
+import { Importable, ImportableArgs } from "./Importable";
 
 //namespace beepbox {
 const { button, div, h2 } = HTML;
@@ -244,8 +245,11 @@ export class CustomChipPromptCanvas {
     }
 }
 
-export class CustomChipPrompt implements Prompt {
-
+export class CustomChipPrompt extends Importable implements Prompt {
+    static promptName: string = "customChipSettings";
+    static args: ImportableArgs[] = ["editor"];
+    
+    //@ts-ignore
     public customChipCanvas: CustomChipPromptCanvas = new CustomChipPromptCanvas(this._doc);
 
     public readonly _playButton: HTMLButtonElement = button({ style: "width: 55%;", type: "button" });
@@ -286,7 +290,7 @@ export class CustomChipPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument, private _songEditor: SongEditor) {
-
+        super();
         this._okayButton.addEventListener("click", this._saveChanges);
         this._cancelButton.addEventListener("click", this._close);
         this.container.addEventListener("keydown", this.whenKeyPressed);

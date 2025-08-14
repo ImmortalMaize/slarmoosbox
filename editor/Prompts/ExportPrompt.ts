@@ -1,14 +1,15 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { InstrumentType, /*EnvelopeType,*/ Config, getArpeggioPitchIndex } from "../synth/SynthConfig";
-import { Instrument, Pattern, Note, Song, Synth } from "../synth/synth";
-import { ColorConfig } from "./ColorConfig";
-import { Preset, EditorConfig } from "./EditorConfig";
-import { SongDocument } from "./SongDocument";
+import { InstrumentType, /*EnvelopeType,*/ Config, getArpeggioPitchIndex } from "../../synth/SynthConfig";
+import { Instrument, Pattern, Note, Song, Synth } from "../../synth/synth";
+import { ColorConfig } from "../ColorConfig";
+import { Preset, EditorConfig } from "../EditorConfig";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { ArrayBufferWriter } from "./ArrayBufferWriter";
-import { MidiChunkType, MidiFileFormat, MidiControlEventMessage, MidiEventType, MidiMetaEventMessage, MidiRegisteredParameterNumberMSB, MidiRegisteredParameterNumberLSB, volumeMultToMidiVolume, volumeMultToMidiExpression, defaultMidiPitchBend, defaultMidiExpression } from "./Midi";
+import { ArrayBufferWriter } from "../ArrayBufferWriter";
+import { MidiChunkType, MidiFileFormat, MidiControlEventMessage, MidiEventType, MidiMetaEventMessage, MidiRegisteredParameterNumberMSB, MidiRegisteredParameterNumberLSB, volumeMultToMidiVolume, volumeMultToMidiExpression, defaultMidiPitchBend, defaultMidiExpression } from "../Midi";
+import { Importable } from "./Importable";
 
 const { button, div, h2, input, select, option } = HTML;
 
@@ -39,7 +40,10 @@ function save(blob: Blob, name: string): void {
     }
 }
 
-export class ExportPrompt implements Prompt {
+export class ExportPrompt extends Importable implements Prompt {
+    static promptName: string = "Export";
+    static args = []
+
     private synth: Synth;
     private thenExportTo: string;
     private recordedSamplesL: Float32Array;
@@ -117,6 +121,7 @@ export class ExportPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super();
         this._loopDropDown.value = "1";
 
         if (this._doc.song.loopStart == 0) {

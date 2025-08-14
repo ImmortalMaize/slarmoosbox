@@ -1,9 +1,10 @@
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { Dictionary, Config } from "../synth/SynthConfig";
-import { clamp, parseFloatWithDefault, parseIntWithDefault } from "../synth/synth";
-import { ColorConfig } from "./ColorConfig";
-import { EditorConfig } from "./EditorConfig";
-import { SongDocument } from "./SongDocument";
+import { Dictionary, Config } from "../../synth/SynthConfig";
+import { clamp, parseFloatWithDefault, parseIntWithDefault } from "../../synth/synth";
+import { ColorConfig } from "../ColorConfig";
+import { EditorConfig } from "../EditorConfig";
+import { SongDocument } from "../SongDocument";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { div, input, button, a, code, textarea, details, summary, span, ul, li, select, option, h2 } = HTML;
 
@@ -30,7 +31,10 @@ interface ParsedEntries {
 //   fine.
 // - Use constants or an enum for the key-value pairs.
 
-export class AddSamplesPrompt {
+export class AddSamplesPrompt extends Importable {
+    static promptName = "addExternal"
+    static args: ImportableArgs[] = ["song"]
+
     private readonly _maxSamples: number = 64;
 
     private _doc: SongDocument;
@@ -141,6 +145,7 @@ export class AddSamplesPrompt {
     );
 
     constructor(_doc: SongDocument) {
+        super();
         this._doc = _doc;
         if (EditorConfig.customSamples != null) {
             // In this case, `EditorConfig.customSamples` should have the URLs

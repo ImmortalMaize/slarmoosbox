@@ -1,15 +1,19 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 //import { SongEditor } from "./SongEditor";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { Channel, Instrument } from "../synth/synth";
-import { ChangePasteInstrument, ChangeAppendInstrument, ChangeViewInstrument } from "./changes";
+import { Channel, Instrument } from "../../synth/synth";
+import { ChangePasteInstrument, ChangeAppendInstrument, ChangeViewInstrument } from "../changes";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, h2, input, select, option, code } = HTML;
 
-export class InstrumentImportPrompt implements Prompt {
+export class InstrumentImportPrompt extends Importable implements Prompt {
+    static promptName: string = "importInstrument";
+    static args: ImportableArgs[] = []
+
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
     private readonly _importStrategySelect: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "append" }, "Append instruments to the end of the list."),
@@ -49,7 +53,7 @@ export class InstrumentImportPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
-
+        super();
         if ((_doc.song.patternInstruments || _doc.song.layeredInstruments) == false) {
             this._importStrategySelect.disabled = true;
             this._importStrategySelect.value = "replace";

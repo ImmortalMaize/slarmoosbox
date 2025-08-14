@@ -1,13 +1,17 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { SongDocument } from "./SongDocument";
-import { Layout } from "./Layout";
+import { SongDocument } from "../SongDocument";
+import { Layout } from "../Layout";
 import { Prompt } from "./Prompt";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, label, div, form, h2, input } = HTML;
 
-export class LayoutPrompt implements Prompt {
+export class LayoutPrompt extends Importable implements Prompt {
+    static promptName: string = "layout";
+    static args: ImportableArgs[] = []
+    
     private readonly _fileInput: HTMLInputElement = input({ type: "file", accept: ".json,application/json,.mid,.midi,audio/midi,audio/x-midi" });
     private readonly _okayButton: HTMLButtonElement = button({ class: "okayButton", style: "width:45%;" }, "Okay");
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
@@ -112,6 +116,7 @@ export class LayoutPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super()
         this._fileInput.select();
         setTimeout(() => this._fileInput.focus());
 

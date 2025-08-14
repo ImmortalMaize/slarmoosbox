@@ -1,10 +1,14 @@
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, h2, select, option } = HTML;
 
-export class ShortenerConfigPrompt implements Prompt {
+export class ShortenerConfigPrompt extends Importable implements Prompt {
+    static promptName: string = "configureShortener";
+    static args: ImportableArgs[] = [];
+    
     private readonly _shortenerStrategySelect: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "tinyurl" }, "tinyurl.com"),
         option({ value: "isgd" }, "is.gd"),
@@ -25,6 +29,7 @@ export class ShortenerConfigPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super()
         const lastStrategy: string | null = window.localStorage.getItem("shortenerStrategySelect");
         if (lastStrategy != null) {
             this._shortenerStrategySelect.value = lastStrategy;

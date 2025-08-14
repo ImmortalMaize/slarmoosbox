@@ -2,17 +2,21 @@
 
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
-import { Config } from "../synth/SynthConfig";
+import { SongDocument } from "../SongDocument";
+import { Config } from "../../synth/SynthConfig";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, p, h2, h3 } = HTML;
 
-export class TipPrompt implements Prompt {
+export class TipPrompt extends Importable implements Prompt {
+	static promptName: string = "tip";
+	static args: ImportableArgs[] = ["promptName"];
 	private readonly _closeButton: HTMLButtonElement = button({ class: "cancelButton" });
 
 	public readonly container: HTMLDivElement;
 
 	constructor(private _doc: SongDocument, type: string) {
+		super();
 		let message: HTMLDivElement;
 
 		switch (type) {

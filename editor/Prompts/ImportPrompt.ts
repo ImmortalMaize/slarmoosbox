@@ -1,19 +1,23 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { InstrumentType, Config } from "../synth/SynthConfig";
-import { NotePin, Note, makeNotePin, Pattern, Instrument, Channel, Song, Synth } from "../synth/synth";
-import { Preset, EditorConfig } from "./EditorConfig";
-import { SongDocument } from "./SongDocument";
+import { InstrumentType, Config } from "../../synth/SynthConfig";
+import { NotePin, Note, makeNotePin, Pattern, Instrument, Channel, Song, Synth } from "../../synth/synth";
+import { Preset, EditorConfig } from "../EditorConfig";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { ChangeGroup } from "./Change";
-import { removeDuplicatePatterns, ChangeSong, ChangeReplacePatterns } from "./changes";
-import { AnalogousDrum, analogousDrumMap, MidiChunkType, MidiFileFormat, MidiEventType, MidiControlEventMessage, MidiMetaEventMessage, MidiRegisteredParameterNumberMSB, MidiRegisteredParameterNumberLSB, midiVolumeToVolumeMult, midiExpressionToVolumeMult } from "./Midi";
-import { ArrayBufferReader } from "./ArrayBufferReader";
+import { ChangeGroup } from "../Change";
+import { removeDuplicatePatterns, ChangeSong, ChangeReplacePatterns } from "../changes";
+import { AnalogousDrum, analogousDrumMap, MidiChunkType, MidiFileFormat, MidiEventType, MidiControlEventMessage, MidiMetaEventMessage, MidiRegisteredParameterNumberMSB, MidiRegisteredParameterNumberLSB, midiVolumeToVolumeMult, midiExpressionToVolumeMult } from "../Midi";
+import { ArrayBufferReader } from "../ArrayBufferReader";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, p, div, h2, input, select, option } = HTML;
 
-export class ImportPrompt implements Prompt {
+export class ImportPrompt extends Importable implements Prompt {
+    static promptName: string = "import";
+    static args: ImportableArgs[] = []
+    
     private readonly _fileInput: HTMLInputElement = input({ type: "file", accept: ".json,application/json,.mid,.midi,audio/midi,audio/x-midi" });
     private readonly _cancelButton: HTMLButtonElement = button({ class: "cancelButton" });
     private readonly _modeImportSelect: HTMLSelectElement = select({ style: "width: 100%;" },
@@ -44,6 +48,7 @@ export class ImportPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super()
         this._fileInput.select();
         setTimeout(() => this._fileInput.focus());
 
@@ -835,7 +840,7 @@ export class ImportPrompt implements Prompt {
             // flipped relative to the UI, so we need to pick a pitch value accordingly.
             const tempoModPitch = Config.modCount - 1;
             let currentBar = -1;
-            let pattern = null;
+            let pattern: Pattern|null = null;
             let prevChangeEndPart = 0;
             for (let changeIndex = 0; changeIndex < tempoChanges.length; changeIndex++) {
                 const change = tempoChanges[changeIndex];
@@ -866,7 +871,7 @@ export class ImportPrompt implements Prompt {
                                 tempoModChannel.bars[currentBar] = 0;
                                 currentBar++;
                             }
-                            pattern = new Pattern();
+                            pattern = new Pattern() as Pattern
                             tempoModChannel.patterns.push(pattern);
                             tempoModChannel.bars[currentBar] = tempoModChannel.patterns.length;
                             pattern.instruments[0] = 0;

@@ -2,17 +2,20 @@
 
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
-import { Config } from "../synth/SynthConfig";
-import { FilterEditor } from "./FilterEditor";
-import { SongEditor } from "./SongEditor";
-import { FilterSettings } from "../synth/synth";
-import { ColorConfig } from "./ColorConfig";
+import { SongDocument } from "../SongDocument";
+import { Config } from "../../synth/SynthConfig";
+import { FilterEditor } from "../FilterEditor";
+import { SongEditor } from "../SongEditor";
+import { FilterSettings } from "../../synth/synth";
+import { ColorConfig } from "../ColorConfig";
+import { Importable, ImportableArgs } from "./Importable";
 
 //namespace beepbox {
 const { button, div, h2, p } = HTML;
 
-export class CustomFilterPrompt implements Prompt {
+export class CustomFilterPrompt extends Importable implements Prompt {
+    static promptName: string[] = ["customEQFilterSettings", "customNoteFilterSettings", "customSongEQFilterSettings"];
+    static args: Array<ImportableArgs[]> = [["editor", false], ["editor", true], ["editor", false, true]];
 
     public filterEditor: FilterEditor;
 
@@ -68,7 +71,7 @@ export class CustomFilterPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument, private _songEditor: SongEditor, private _useNoteFilter: boolean, private forSong: boolean=false) {
-
+        super();
         this._okayButton.addEventListener("click", this._saveChanges);
         this._cancelButton.addEventListener("click", this._close);
         this._playButton.addEventListener("click", this._togglePlay);

@@ -1,11 +1,12 @@
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { sampleLoadingState, SampleLoadingStatus, ChipWave, Config } from "../synth/SynthConfig";
-import { Instrument } from "../synth/synth";
-import { ColorConfig } from "./ColorConfig";
-import { ChangeGroup } from "./Change";
-import { SongDocument } from "./SongDocument";
-import { SongEditor } from "./SongEditor";
-import { ChangeChipWaveLoopMode, ChangeChipWaveStartOffset, ChangeChipWaveLoopStart, ChangeChipWaveLoopEnd, ChangeChipWavePlayBackwards } from "./changes";
+import { sampleLoadingState, SampleLoadingStatus, ChipWave, Config } from "../../synth/SynthConfig";
+import { Instrument } from "../../synth/synth";
+import { ColorConfig } from "../ColorConfig";
+import { ChangeGroup } from "../Change";
+import { SongDocument } from "../SongDocument";
+import { SongEditor } from "../SongEditor";
+import { ChangeChipWaveLoopMode, ChangeChipWaveStartOffset, ChangeChipWaveLoopStart, ChangeChipWaveLoopEnd, ChangeChipWavePlayBackwards } from "../changes";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { div, input, button, h2, select, option, canvas } = HTML;
 
@@ -210,7 +211,10 @@ class VisualLoopControlsHandle {
     }
 }
 
-export class VisualLoopControlsPrompt {
+export class VisualLoopControlsPrompt extends Importable {
+    static promptName: string = "visualLoopControls";
+    static args: ImportableArgs[] = ["editor"];
+
     private readonly _waveformCanvasWidth: number = 500;
     private readonly _waveformCanvasHeight: number = 200;
     private readonly _handleCanvasHeight: number = 20;
@@ -426,6 +430,7 @@ export class VisualLoopControlsPrompt {
     public gotMouseUp: boolean = false;
 
     constructor(_doc: SongDocument, _songEditor: SongEditor) {
+        super()
         this._doc = _doc;
         this._songEditor = _songEditor;
         this._waveformContext = this._waveformCanvas.getContext("2d");

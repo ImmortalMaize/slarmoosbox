@@ -1,14 +1,18 @@
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 
-import { PatternEditor } from "./PatternEditor";
+import { PatternEditor } from "../PatternEditor";
+import { Importable, ImportableArgs } from "./Importable";
 // import { ColorConfig } from "./ColorConfig";
 
 //namespace beepbox {
 const { button, div, h2, input, p, a } = HTML;
 let doReload = false;
-export class CustomThemePrompt implements Prompt {
+export class CustomThemePrompt extends Importable implements Prompt {
+	static promptName: string = "customTheme"
+	static args: ImportableArgs[] = ["patternEditor", "trackArea", "hasContainer"];
+
 	private readonly _fileInput: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose editor background image"});
 	private readonly _fileInput2: HTMLInputElement = input({ type: "file", accept: "image/*", text: "choose website background image" });
 	private readonly _colorInput: HTMLInputElement = input({ type: "text", value: localStorage.getItem("customColors") || `:root {
@@ -166,7 +170,8 @@ export class CustomThemePrompt implements Prompt {
     // private readonly lastTheme: string | null = window.localStorage.getItem("colorTheme")
 
     constructor(private _doc: SongDocument, private _pattern: PatternEditor, private _pattern2: HTMLDivElement, private _pattern3: HTMLElement) {
-        this._fileInput.addEventListener("change", this._whenFileSelected);
+        super();
+		this._fileInput.addEventListener("change", this._whenFileSelected);
         this._fileInput2.addEventListener("change", this._whenFileSelected2);
         this._colorInput.addEventListener("change", this._whenColorsChanged);
         this._okayButton.addEventListener("click", this._close);

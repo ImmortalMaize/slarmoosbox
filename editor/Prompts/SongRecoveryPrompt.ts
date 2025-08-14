@@ -1,13 +1,17 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { SongDocument } from "./SongDocument";
-import { RecoveredSong, RecoveredVersion, SongRecovery, versionToKey } from "./SongRecovery";
+import { SongDocument } from "../SongDocument";
+import { RecoveredSong, RecoveredVersion, SongRecovery, versionToKey } from "../SongRecovery";
+import { Importable, ImportableArgs } from "./Importable";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 
 const { button, div, h2, p, select, option, iframe } = HTML;
 
-export class SongRecoveryPrompt implements Prompt {
+export class SongRecoveryPrompt extends Importable implements Prompt {
+	static promptName: string = "songRecovery";
+	static args: ImportableArgs[] = [];
+	
 	private readonly _songContainer: HTMLDivElement = div();
 		private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
 		
@@ -22,6 +26,7 @@ export class SongRecoveryPrompt implements Prompt {
 	);
 		
 	constructor(private _doc: SongDocument) {
+		super()
 		this._cancelButton.addEventListener("click", this._close);
 			
 		const songs: RecoveredSong[] = SongRecovery.getAllRecoveredSongs();

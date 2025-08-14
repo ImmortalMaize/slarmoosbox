@@ -7,7 +7,7 @@ import "./style"; // Import for the side effects, there's no exports.
 import { SongEditor } from "./SongEditor";
 import { NotePin, Note, Pattern, Instrument, Channel, Song, Synth } from "../synth/synth";
 import { SongDocument } from "./SongDocument";
-import { ExportPrompt } from "./ExportPrompt";
+import { ExportPrompt } from "./Prompts/ExportPrompt";
 import { ChangePreset } from "./changes";
 
 

@@ -1,16 +1,20 @@
 // Copyright (C) 2020 John Nesky, distributed under the MIT license.
 
-import { Config } from "../synth/SynthConfig";
+import { Config } from "../../synth/SynthConfig";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
-import { ChangeCustomScale } from "./changes";
+import { ChangeCustomScale } from "../changes";
+import { Importable, ImportableArgs } from "./Importable";
 
 
 //namespace beepbox {
 const { button, div, h2, input, p } = HTML;
 
-export class CustomScalePrompt implements Prompt {
+export class CustomScalePrompt extends Importable implements Prompt {
+    static promptName: string = "customScale"
+    static args: ImportableArgs[] = ["song"];
+
     private readonly _flags: boolean[] = [];
     private readonly _scaleFlags: HTMLInputElement[] = [];
     private readonly _scaleRows: HTMLDivElement[] = [];
@@ -20,6 +24,7 @@ export class CustomScalePrompt implements Prompt {
     public readonly container: HTMLDivElement;
 
     constructor(private _doc: SongDocument) {
+        super();
         this._flags = _doc.song.scaleCustom.slice();
         let scaleHolder: HTMLDivElement = div({});
         for (var i = 1; i < Config.pitchesPerOctave; i++) {

@@ -1,15 +1,19 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
+import { Config } from "../../synth/SynthConfig";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
-import { ChangeMoveNotesSideways } from "./changes";
-import { ColorConfig } from "./ColorConfig";
+import { ChangeMoveNotesSideways } from "../changes";
+import { ColorConfig } from "../ColorConfig";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, span, h2, input, br, select, option } = HTML;
 
-export class MoveNotesSidewaysPrompt implements Prompt {
+export class MoveNotesSidewaysPrompt extends Importable implements Prompt {
+    static promptName: string = "moveNotesSideways";
+    static args: ImportableArgs[] = [];
+
     private readonly _beatsStepper: HTMLInputElement = input({ style: "width: 3em; margin-left: 1em;", type: "number", step: "0.01", value: "0" });
     private readonly _conversionStrategySelect: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "overflow" }, "Overflow notes across bars."),
@@ -38,6 +42,7 @@ export class MoveNotesSidewaysPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super()
         this._beatsStepper.min = (-this._doc.song.beatsPerBar) + "";
         this._beatsStepper.max = this._doc.song.beatsPerBar + "";
 

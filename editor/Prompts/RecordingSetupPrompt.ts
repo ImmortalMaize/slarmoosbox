@@ -1,17 +1,21 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
-import { EditorConfig } from "./EditorConfig";
-import { SongDocument } from "./SongDocument";
+import { Config } from "../../synth/SynthConfig";
+import { EditorConfig } from "../EditorConfig";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { ColorConfig } from "./ColorConfig";
-import { KeyboardLayout } from "./KeyboardLayout";
-import { Piano } from "./Piano";
+import { ColorConfig } from "../ColorConfig";
+import { KeyboardLayout } from "../KeyboardLayout";
+import { Piano } from "../Piano";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, label, div, p, a, h2, input, select, option } = HTML;
 
-export class RecordingSetupPrompt implements Prompt {
+export class RecordingSetupPrompt extends Importable implements Prompt {
+    static promptName: string = "recordingSetup";
+    static args: ImportableArgs[] = [];
+
     private readonly _keyboardMode: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "useCapsLockForNotes" }, "simple shortcuts, use caps lock to play notes"),
         option({ value: "pressControlForShortcuts" }, "simple notes, press " + EditorConfig.ctrlName + " for shortcuts"),
@@ -96,6 +100,7 @@ export class RecordingSetupPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super();
         this._keyboardMode.value = this._doc.prefs.pressControlForShortcuts ? "pressControlForShortcuts" : "useCapsLockForNotes";
         this._keyboardLayout.value = this._doc.prefs.keyboardLayout;
         this._bassOffset.value = String(this._doc.prefs.bassOffset);

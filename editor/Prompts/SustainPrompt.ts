@@ -1,16 +1,20 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
-import { Instrument } from "../synth/synth";
+import { Config } from "../../synth/SynthConfig";
+import { Instrument } from "../../synth/synth";
 import { HTML } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
-import { ChangeGroup } from "./Change";
-import { ChangeStringSustainType } from "./changes";
+import { ChangeGroup } from "../Change";
+import { ChangeStringSustainType } from "../changes";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, h2, p, select, option } = HTML;
 
-export class SustainPrompt implements Prompt {
+export class SustainPrompt extends Importable implements Prompt {
+    static promptName: string = "sustain";
+    static args: ImportableArgs[] = [];
+    
     private readonly _typeSelect: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ value: "acoustic" }, "(A) Acoustic"),
         option({ value: "bright" }, "(B) Bright"),
@@ -35,6 +39,7 @@ export class SustainPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super()
         const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
         this._typeSelect.value = Config.sustainTypeNames[instrument.stringSustainType];
 

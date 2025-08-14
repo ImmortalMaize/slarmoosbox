@@ -2,13 +2,17 @@
 
 import { HTML } from "imperative-html/dist/esm/elements-strict";
 import { Prompt } from "./Prompt";
-import { SongDocument } from "./SongDocument";
-import { ColorConfig } from "./ColorConfig";
+import { SongDocument } from "../SongDocument";
+import { ColorConfig } from "../ColorConfig";
+import { Importable, ImportableArgs } from "./Importable";
 
 //namespace beepbox {
 const { button, div, h2, select, option, optgroup } = HTML;
 
-export class ThemePrompt implements Prompt {
+export class ThemePrompt extends Importable implements Prompt {
+	static promptName: string = "theme";
+	static args: ImportableArgs[] = [];
+
 	private readonly _themeSelect: HTMLSelectElement = select({ style: "width: 100%;" },
 		optgroup({ label: "Default Themes" },
 			option({ value: "slarmoosbox" }, "Slarmoo's Box"),
@@ -91,6 +95,7 @@ export class ThemePrompt implements Prompt {
 	private readonly lastTheme: string | null = window.localStorage.getItem("colorTheme")
 
 	constructor(private _doc: SongDocument) {
+		super();
 		if (this.lastTheme != null) {
 			this._themeSelect.value = this.lastTheme;
 		}

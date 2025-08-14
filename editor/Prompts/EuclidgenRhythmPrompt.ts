@@ -1,14 +1,15 @@
 // Copyright (C) 2012-2023 John Nesky and contributing authors, distributed under the MIT license, see the accompanying LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
+import { Config } from "../../synth/SynthConfig";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
-import { SongDocument } from "./SongDocument";
+import { SongDocument } from "../SongDocument";
 import { Prompt } from "./Prompt";
-import { ColorConfig, ChannelColors } from "./ColorConfig";
-import { prettyNumber } from "./EditorConfig";
-import { ChangeGroup } from "./Change";
-import { ChangeEnsurePatternExists, ChangePatternNumbers, ChangeNoteAdded, ChangeInsertBars } from "./changes";
-import { Note, NotePin, Pattern, makeNotePin } from "../synth/synth";
+import { ColorConfig, ChannelColors } from "../ColorConfig";
+import { prettyNumber } from "../EditorConfig";
+import { ChangeGroup } from "../Change";
+import { ChangeEnsurePatternExists, ChangePatternNumbers, ChangeNoteAdded, ChangeInsertBars } from "../changes";
+import { Note, NotePin, Pattern, makeNotePin } from "../../synth/synth";
+import { Importable, ImportableArgs } from "./Importable";
 
 const { button, div, h2, input } = HTML;
 
@@ -137,7 +138,10 @@ function generateEuclideanRhythm(steps: number, pulses: number, offset: number):
     return pattern;
 }
 
-export class EuclideanRhythmPrompt implements Prompt {
+export class EuclideanRhythmPrompt extends Importable implements Prompt {
+    static promptName: string = "generateEuclideanRhythm";
+    static args: ImportableArgs[] = ["song"];
+    
     private readonly _minSteps: number = 2;
     private readonly _maxSteps: number = 64;
 
@@ -338,6 +342,7 @@ export class EuclideanRhythmPrompt implements Prompt {
     );
 
     constructor(private _doc: SongDocument) {
+        super();
         this._startBar = this._doc.bar;
         this._barPreviewBarIndex = this._startBar;
 
