@@ -1656,11 +1656,6 @@ var beepbox = (function (exports) {
                 ])
             },
             {
-                name: "Saved Presets", presets: toNameMap([
-                    { name: TypePresets[0], customType: 0 }
-                ])
-            },
-            {
                 name: "Retro Presets", presets: toNameMap([
                     { name: "square wave", midiProgram: 80, settings: { "type": "chip", "eqFilter": [], "effects": ["aliasing"], "transition": "interrupt", "fadeInSeconds": 0, "fadeOutTicks": -1, "chord": "arpeggio", "wave": "square", "unison": "none", "envelopes": [] } },
                     { name: "triangle wave", midiProgram: 71, settings: { "type": "chip", "eqFilter": [], "effects": ["aliasing"], "transition": "interrupt", "fadeInSeconds": 0, "fadeOutTicks": -1, "chord": "arpeggio", "wave": "triangle", "unison": "none", "envelopes": [] } },
@@ -9964,6 +9959,9 @@ html {
     display: block;
     padding: 1px;
     background: ${ColorConfig.select2OptGroup};
+}
+.select2-container--default .select2-results__group::after {
+	content: " ▾"
 }
 .select2-results__option {
     padding: 2px;
@@ -41826,6 +41824,40 @@ You should be redirected to the song at:<br /><br />
         };
     }
 
+    class SavePresetPrompt extends Importable {
+        _doc;
+        _editor;
+        static promptName = "savePreset";
+        static args = ["editor"];
+        _cancelButton = HTML.button({ class: "cancelButton" });
+        _saveButton = HTML.button({ class: "saveButton", style: "width:45%;" }, "Save");
+        constructor(_doc, _editor) {
+            super();
+            this._doc = _doc;
+            this._editor = _editor;
+            this._cancelButton.addEventListener("click", this._close);
+            this._saveButton.addEventListener("click", this._savePreset);
+        }
+        container = HTML.div({ class: "prompt noSelection", style: "width: 250px;" }, HTML.h2("Save Preset"), HTML.input({ type: "text", style: "width: 100%;", value: "", maxlength: 250, "autofocus": "autofocus", placeholder: "Preset Name" }), HTML.div({ style: "display: flex; flex-direction: row-reverse; justify-content: space-between;" }, this._saveButton, this._cancelButton));
+        _savePreset = () => {
+            const presetName = this.container.querySelector("input").value.trim();
+            if (presetName.length > 0) {
+                this._editor.savePreset(presetName);
+                this._close();
+            }
+            else {
+                alert("Please enter a valid preset name.");
+            }
+        };
+        _close = () => {
+            this._doc.undo();
+        };
+        cleanUp = () => {
+            this._cancelButton.removeEventListener("click", this._close);
+            this._saveButton.removeEventListener("click", this._savePreset);
+        };
+    }
+
     var Prompts = /*#__PURE__*/Object.freeze({
         __proto__: null,
         AddSamplesPrompt: AddSamplesPrompt,
@@ -41851,7 +41883,8 @@ You should be redirected to the song at:<br /><br />
         SongRecoveryPrompt: SongRecoveryPrompt,
         SustainPrompt: SustainPrompt,
         ThemePrompt: ThemePrompt,
-        TipPrompt: TipPrompt
+        TipPrompt: TipPrompt,
+        SavePresetPrompt: SavePresetPrompt
     });
 
     const { span: span$1 } = HTML;
@@ -46654,15 +46687,108 @@ You should be redirected to the song at:<br /><br />
 
     class PresetSettingsRow extends Component {
         editor;
+        _selectedUserPreset = "";
+        deselectPreset() {
+            this._selectedUserPreset = "";
+            $('#save-preset-button').hide();
+        }
+        selectPreset(name) {
+            this._selectedUserPreset = name;
+            $('#save-preset-button').show();
+        }
         constructor(editor) {
             super(editor, {});
             this.editor = editor;
             const { div, button } = this.HTML;
             const presetSettingsText = div({ id: "instrumentSettingsText", style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` }, "Preset Settings");
-            const savePresetButton = button({ style: "max-width:86px; width: 86px;", onclick: () => editor._openPrompt("savePreset") }, "Save");
-            const saveAsPresetButton = button({ style: "max-width:86px; width: 86px;", onclick: () => editor._openPrompt("savePreset") }, "Save As");
+            const savePresetButton = button({ id: "save-preset-button", style: "max-width:86px; width: 86px;", onclick: () => editor._openPrompt("savePreset") }, "Save");
+            const saveAsPresetButton = button({ id: "save-as-preset-button", style: "", onclick: () => editor._openPrompt("savePreset") }, "Save As");
+            if (this.editor._selectedUserPreset.length <= 0) {
+                savePresetButton.style.display = "none";
+            }
             const savePresetRow = div({}, presetSettingsText, div({ class: "selectRow" }, savePresetButton, saveAsPresetButton));
             this._html = savePresetRow;
+        }
+    }
+
+    class PresetsEditor {
+        presets = [];
+        constructor(json) {
+            if (json)
+                this.presets = json;
+            else if (localStorage.getItem("userPresets"))
+                this.presets = JSON.parse(localStorage.getItem("userPresets"));
+            else
+                this.presets = [{ name: "My Presets", presets: [] }];
+            this.save();
+        }
+        getPreset = (name, group) => {
+            const collection = this.presets.find((collection) => collection.name === group);
+            if (!collection)
+                return null;
+            const preset = collection.presets.find(preset => preset.name === name);
+            console.log(preset);
+            return preset ?? null;
+        };
+        addPreset = (preset, group) => {
+            let collection = this.presets.find((collection) => collection.name === group);
+            if (!collection) {
+                collection = { name: group, presets: [] };
+                this.presets.push(collection);
+            }
+            collection.presets.push(preset);
+            this.save();
+        };
+        save = () => {
+            const presets = this.presets.filter((collection) => collection.presets.length > 0);
+            localStorage.setItem("userPresets", JSON.stringify(presets));
+        };
+    }
+
+    class Select2 extends Component {
+        _editor;
+        _container;
+        _handler;
+        $;
+        constructor(_editor, _container, _handler) {
+            super(_editor);
+            this._editor = _editor;
+            this._container = _container;
+            this._handler = _handler;
+            this._html = this._container;
+        }
+        init() {
+            const container = $("#" + this._container.id);
+            this.$ = container.select2({ dropdownAutoWidth: true });
+            this._attachEvents();
+        }
+        _attachEvents() {
+            const container = $("#" + this._container.id);
+            const { _editor: editor } = this;
+            container.on('select2:open', function () {
+                console.log("opened!");
+                $('.select2-dropdown--below').css('opacity', 0);
+                $('.select2-dropdown').css('opacity', 1);
+                setTimeout(() => {
+                    let groups = $('.select2-container--open .select2-results__group');
+                    let options = $('.select2-container--open .select2-results__option');
+                    $.each(groups, (_index, v) => {
+                        $(v).siblings().hide();
+                        $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+                    });
+                    $.each(options, (_index, v) => {
+                        $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+                    });
+                    $('.select2-dropdown--below').css('opacity', 1);
+                }, 0);
+            });
+            container.on('change', this._handler);
+            container.on("select2:close", this._editor._refocus);
+        }
+        addOption(option, label) {
+            this.$.select2("destroy");
+            $(`#${this.container.id} optgroup[label="${label}"]`).append(option).val(option.value);
+            this.$.select2({ dropdownAutoWidth: true });
         }
     }
 
@@ -46680,7 +46806,7 @@ You should be redirected to the song at:<br /><br />
         }
         return menu;
     }
-    function buildPresetOptions(isNoise, idSet) {
+    function buildPresetOptions(isNoise, idSet, userPresets) {
         const menu = select({ id: idSet, class: "presetSelect" });
         if (isNoise) {
             menu.appendChild(option({ value: 2 }, EditorConfig.valueToPreset(2).name));
@@ -46699,7 +46825,7 @@ You should be redirected to the song at:<br /><br />
             menu.appendChild(option({ value: 3 }, EditorConfig.valueToPreset(3).name));
             menu.appendChild(option({ value: 2 }, EditorConfig.valueToPreset(2).name));
         }
-        const randomGroup = optgroup({ label: "Randomize ▾" });
+        const randomGroup = optgroup({ label: "Randomize" });
         randomGroup.appendChild(option({ value: "randomPreset" }, "Random Preset"));
         randomGroup.appendChild(option({ value: "randomGenerated" }, "Random Generated"));
         menu.appendChild(randomGroup);
@@ -46707,11 +46833,13 @@ You should be redirected to the song at:<br /><br />
         let customSampleCategoryGroup = null;
         for (let categoryIndex = 1; categoryIndex < EditorConfig.presetCategories.length; categoryIndex++) {
             const category = EditorConfig.presetCategories[categoryIndex];
-            const group = optgroup({ label: category.name + " ▾" });
+            console.log(category);
+            const group = optgroup({ label: category.name + "" });
             let foundAny = false;
             for (let presetIndex = 0; presetIndex < category.presets.length; presetIndex++) {
                 const preset = category.presets[presetIndex];
-                if ((preset.isNoise == true) == isNoise) {
+                console.log(preset.name, !!preset.isNoise == isNoise);
+                if ((!!preset.isNoise) == isNoise) {
                     group.appendChild(option({ value: (categoryIndex << 6) + presetIndex }, preset.name));
                     foundAny = true;
                 }
@@ -46743,6 +46871,13 @@ You should be redirected to the song at:<br /><br />
             const parent = customSampleCategoryGroup.parentNode;
             parent.removeChild(customSampleCategoryGroup);
             parent.insertBefore(customSampleCategoryGroup, firstCategoryGroup);
+        }
+        for (const collection of userPresets.presets) {
+            const group = optgroup({ label: `${collection.name}` });
+            for (const preset of collection.presets.filter((p) => p.instrument["isDrum"] == isNoise)) {
+                group.appendChild(option({ value: collection.name + "/" + preset.name }, preset.name));
+            }
+            menu.append(group);
         }
         return menu;
     }
@@ -47239,6 +47374,8 @@ You should be redirected to the song at:<br /><br />
     class SongEditor {
         prompt = null;
         doc = new SongDocument();
+        _selectedUserPreset = "";
+        _presetsEditor = new PresetsEditor();
         _keyboardLayout = new KeyboardLayout(this.doc);
         _patternEditorPrev = new PatternEditor(this.doc, false, -1);
         _patternEditor = new PatternEditor(this.doc, true, 0);
@@ -47305,8 +47442,14 @@ You should be redirected to the song at:<br /><br />
         _echoDelaySlider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoDelayRange - 1, value: "0", step: "1" }), this.doc, (oldValue, newValue) => new ChangeEchoDelay(this.doc, oldValue, newValue), false);
         _echoDelayRow = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("echoDelay") }, "Echo Delay:"), this._echoDelaySlider.container);
         _rhythmSelect = buildOptions(select(), Config.rhythms.map(rhythm => rhythm.name));
-        _pitchedPresetSelect = buildPresetOptions(false, "pitchPresetSelect");
-        _drumPresetSelect = buildPresetOptions(true, "drumPresetSelect");
+        _whenSetPitchedPreset = () => {
+            this._setPreset($('#pitchPresetSelect').val() + "");
+        };
+        _whenSetDrumPreset = () => {
+            this._setPreset($('#drumPresetSelect').val() + "");
+        };
+        _pitchedPresetSelect = new Select2(this, buildPresetOptions(false, "pitchPresetSelect", this._presetsEditor), this._whenSetPitchedPreset);
+        _drumPresetSelect = new Select2(this, buildPresetOptions(true, "drumPresetSelect", this._presetsEditor), this._whenSetDrumPreset);
         _algorithmSelect = buildOptions(select(), Config.algorithms.map(algorithm => algorithm.name));
         _algorithmSelectRow = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("algorithm") }, "Algorithm: "), div({ class: "selectContainer" }, this._algorithmSelect));
         _instrumentButtons = [];
@@ -47511,7 +47654,7 @@ You should be redirected to the song at:<br /><br />
         _instrumentCopyGroup = div({ class: "editor-controls" }, div({ class: "selectRow" }, this._instrumentCopyButton, this._instrumentPasteButton));
         _instrumentExportGroup = div({ class: "editor-controls" }, div({ class: "selectRow" }, this._instrumentExportButton, this._instrumentImportButton));
         _instrumentSettingsTextRow = div({ id: "instrumentSettingsText", style: `padding: 3px 0; max-width: 15em; text-align: center; color: ${ColorConfig.secondaryText};` }, "Instrument Settings");
-        _instrumentTypeSelectRow = div({ class: "selectRow", id: "typeSelectRow" }, span({ class: "tip", onclick: () => this._openPrompt("instrumentType") }, "Type:"), div(div({ class: "pitchSelect" }, this._pitchedPresetSelect), div({ class: "drumSelect" }, this._drumPresetSelect)));
+        _instrumentTypeSelectRow = div({ class: "selectRow", id: "typeSelectRow" }, span({ class: "tip", onclick: () => this._openPrompt("instrumentType") }, "Type:"), div(div({ class: "pitchSelect" }, this._pitchedPresetSelect.container), div({ class: "drumSelect" }, this._drumPresetSelect.container)));
         _instrumentSettingsGroup = div({ class: "editor-controls" }, this._instrumentSettingsTextRow, this._instrumentsButtonRow, this._instrumentTypeSelectRow, this._instrumentVolume.container, this._customInstrumentSettingsGroup);
         _usedPatternIndicator = SVG.path({ d: "M -6 -6 H 6 V 6 H -6 V -6 M -2 -3 L -2 -3 L -1 -4 H 1 V 4 H -1 V -1.2 L -1.2 -1 H -2 V -3 z", fill: ColorConfig.indicatorSecondary, "fill-rule": "evenodd" });
         _usedInstrumentIndicator = SVG.path({ d: "M -6 -0.8 H -3.8 V -6 H 0.8 V 4.4 H 2.2 V -0.8 H 6 V 0.8 H 3.8 V 6 H -0.8 V -4.4 H -2.2 V 0.8 H -6 z", fill: ColorConfig.indicatorSecondary });
@@ -48403,18 +48546,18 @@ You should be redirected to the song at:<br /><br />
                 this._modulatorGroup.style.display = "none";
                 this._usageCheck(this.doc.channel, instrumentIndex);
                 if (this.doc.song.getChannelIsNoise(this.doc.channel)) {
-                    this._pitchedPresetSelect.style.display = "none";
-                    this._drumPresetSelect.style.display = "";
+                    this._pitchedPresetSelect.container.style.display = "none";
+                    this._drumPresetSelect.container.style.display = "";
                     $("#pitchPresetSelect").parent().hide();
                     $("#drumPresetSelect").parent().show();
-                    setSelectedValue(this._drumPresetSelect, instrument.preset, true);
+                    setSelectedValue(this._drumPresetSelect.container, instrument.preset, true);
                 }
                 else {
-                    this._pitchedPresetSelect.style.display = "";
-                    this._drumPresetSelect.style.display = "none";
+                    this._pitchedPresetSelect.container.style.display = "";
+                    this._drumPresetSelect.container.style.display = "none";
                     $("#pitchPresetSelect").parent().show();
                     $("#drumPresetSelect").parent().hide();
-                    setSelectedValue(this._pitchedPresetSelect, instrument.preset, true);
+                    setSelectedValue(this._pitchedPresetSelect.container, instrument.preset, true);
                 }
                 if (instrument.type == 2) {
                     this._chipWaveSelectRow.style.display = "none";
@@ -48885,8 +49028,8 @@ You should be redirected to the song at:<br /><br />
             }
             else {
                 this._usageCheck(this.doc.channel, instrumentIndex);
-                this._pitchedPresetSelect.style.display = "none";
-                this._drumPresetSelect.style.display = "none";
+                this._pitchedPresetSelect.container.style.display = "none";
+                this._drumPresetSelect.container.style.display = "none";
                 $("#pitchPresetSelect").parent().hide();
                 $("#drumPresetSelect").parent().hide();
                 if (prefs.instrumentButtonsAtTop) {
@@ -50681,6 +50824,18 @@ You should be redirected to the song at:<br /><br />
             }
             this.refocusStage();
         };
+        _pasteUserPreset = (name, group) => {
+            console.log("pasting user preset");
+            const channel = this.doc.song.channels[this.doc.channel];
+            const instrument = channel.instruments[this.doc.getCurrentInstrument()];
+            const instrumentCopy = this._presetsEditor.getPreset(name, group);
+            if (!instrumentCopy)
+                return;
+            if (instrumentCopy != null && instrumentCopy.instrument["isDrum"] == this.doc.song.getChannelIsNoise(this.doc.channel) && instrumentCopy.instrument["isMod"] == this.doc.song.getChannelIsMod(this.doc.channel)) {
+                this.doc.record(new ChangePasteInstrument(this.doc, instrument, instrumentCopy.instrument));
+            }
+            this.refocusStage();
+        };
         _exportInstruments = () => {
             this._openPrompt("exportInstrument");
         };
@@ -50761,31 +50916,34 @@ You should be redirected to the song at:<br /><br />
             var selfRef = this;
             setTimeout(function () { selfRef.mainLayer.focus(); }, 20);
         };
-        _whenSetPitchedPreset = () => {
-            this._setPreset($('#pitchPresetSelect').val() + "");
-        };
-        _whenSetDrumPreset = () => {
-            this._setPreset($('#drumPresetSelect').val() + "");
-        };
         _setPreset(preset) {
             if (isNaN(preset)) {
                 switch (preset) {
                     case "copyInstrument":
                         this._copyInstrument();
+                        this._savePreset.deselectPreset();
                         break;
                     case "pasteInstrument":
                         this._pasteInstrument();
+                        this._savePreset.deselectPreset();
                         break;
                     case "randomPreset":
                         this._randomPreset();
+                        this._savePreset.deselectPreset();
                         break;
                     case "randomGenerated":
                         this._randomGenerated(false);
+                        this._savePreset.deselectPreset();
                         break;
+                    default:
+                        const [group, userPreset] = preset.split("/");
+                        console.log(group, userPreset);
+                        this._pasteUserPreset(userPreset, group);
                 }
                 this.doc.notifier.changed();
             }
             else {
+                this._savePreset.deselectPreset();
                 this.doc.record(new ChangePreset(this.doc, parseInt(preset)));
             }
         }
@@ -51213,6 +51371,26 @@ You should be redirected to the song at:<br /><br />
             this.doc.notifier.changed();
             this.doc.prefs.save();
         };
+        rebuildDrumPresetsMenu = () => {
+        };
+        savePreset = (name) => {
+            const instrument = this.doc.getCurrentInstrument();
+            if (this.doc.song.channels[this.doc.channel].instruments[instrument]) {
+                const channel = this.doc.song.channels[this.doc.channel];
+                const instrumentData = channel.instruments[instrument].toJsonObject();
+                instrumentData["isDrum"] = this.doc.song.getChannelIsNoise(this.doc.channel);
+                instrumentData["isMod"] = this.doc.song.getChannelIsMod(this.doc.channel);
+                const presetData = {
+                    name,
+                    instrument: instrumentData
+                };
+                this._presetsEditor.addPreset(presetData, "My Presets");
+                this._pitchedPresetSelect.addOption(option({ value: "My Presets/" + name }, name), "My Presets");
+                this._savePreset.selectPreset(name);
+                this.whenUpdated();
+                this.refocusStage();
+            }
+        };
     }
 
     const editor = new SongEditor();
@@ -51226,49 +51404,10 @@ You should be redirected to the song at:<br /><br />
     editor.mainLayer.getElementsByClassName("instrument-settings-area")[0].className += " load";
     editor.mainLayer.getElementsByClassName("trackAndMuteContainer")[0].className += " load";
     editor.mainLayer.getElementsByClassName("barScrollBar")[0].className += " load";
-    $('#pitchPresetSelect').select2({ dropdownAutoWidth: true });
-    $('#drumPresetSelect').select2({ dropdownAutoWidth: true });
+    editor._pitchedPresetSelect.init();
     $("body").on('click', '.select2-container--open .select2-results__group', function () {
         $(this).siblings().toggle();
     });
-    $("#pitchPresetSelect").on('select2:open', function () {
-        $('.select2-dropdown--below').css('opacity', 0);
-        $('.select2-dropdown').css('opacity', 1);
-        $('#pitchPresetSelect');
-        setTimeout(() => {
-            let groups = $('.select2-container--open .select2-results__group');
-            let options = $('.select2-container--open .select2-results__option');
-            $.each(groups, (index, v) => {
-                $(v).siblings().hide();
-                $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-            });
-            $.each(options, (index, v) => {
-                $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-            });
-            $('.select2-dropdown--below').css('opacity', 1);
-        }, 0);
-    });
-    $("#drumPresetSelect").on('select2:open', function () {
-        $('.select2-dropdown--below').css('opacity', 0);
-        $('.select2-dropdown').css('opacity', 1);
-        $('#drumPresetSelect');
-        setTimeout(() => {
-            let groups = $('.select2-container--open .select2-results__group');
-            let options = $('.select2-container--open .select2-results__option');
-            $.each(groups, (index, v) => {
-                $(v).siblings().hide();
-                $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-            });
-            $.each(options, (index, v) => {
-                $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-            });
-            $('.select2-dropdown--below').css('opacity', 1);
-        }, 0);
-    });
-    $('#pitchPresetSelect').on("change", editor._whenSetPitchedPreset);
-    $('#pitchPresetSelect').on("select2:close", editor._refocus);
-    $('#drumPresetSelect').on("change", editor._whenSetDrumPreset);
-    $('#drumPresetSelect').on("select2:close", editor._refocus);
     editor.mainLayer.focus();
     if (!isMobile && editor.doc.prefs.autoPlay) {
         function autoplay() {

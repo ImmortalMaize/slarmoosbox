@@ -948,6 +948,9 @@ html {
     padding: 1px;
     background: ${ColorConfig.select2OptGroup};
 }
+.select2-container--default .select2-results__group::after {
+	content: " ▾"
+}
 .select2-results__option {
     padding: 2px;
     user-select: none;

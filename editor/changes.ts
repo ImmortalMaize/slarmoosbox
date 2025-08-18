@@ -4295,6 +4295,7 @@ export function pickRandomPresetValue(isNoise: boolean): number {
         for (let presetIndex: number = 0; presetIndex < category.presets.length; presetIndex++) {
             const preset: Preset = category.presets[presetIndex];
             if (preset.settings != undefined && (preset.isNoise == true) == isNoise) {
+                //THIS IS BINARY. THE FIRST 6 DIGITS ARE THE CATEGORY INDEX, THE LAST 6 DIGITS ARE THE PRESET INDEX.
                 eligiblePresetValues.push((categoryIndex << 6) + presetIndex);
             }
         }
@@ -4302,13 +4303,18 @@ export function pickRandomPresetValue(isNoise: boolean): number {
     return eligiblePresetValues[(Math.random() * eligiblePresetValues.length) | 0];
 }
 
+//randomizes each instrument in the song to a random preset
 export function setDefaultInstruments(song: Song): void {
     for (let channelIndex: number = 0; channelIndex < song.channels.length; channelIndex++) {
         for (const instrument of song.channels[channelIndex].instruments) {
             const isNoise: boolean = song.getChannelIsNoise(channelIndex);
             const isMod: boolean = song.getChannelIsMod(channelIndex);
+            
+            //gets random preset
             const presetValue: number = (channelIndex == song.pitchChannelCount) ? EditorConfig.nameToPresetValue(Math.random() > 0.5 ? "chip noise" : "standard drumset")! : pickRandomPresetValue(isNoise);
             const preset: Preset = EditorConfig.valueToPreset(presetValue)!;
+            
+            //makes the instrument using the preset's settings
             instrument.fromJsonObject(preset.settings, isNoise, isMod, song.rhythm == 0 || song.rhythm == 2, song.rhythm >= 2, 1);
             instrument.preset = presetValue;
             instrument.effects |= 1 << EffectType.panning;
@@ -4948,7 +4954,7 @@ export class ChangeDragSelectedNotes extends ChangeSequence {
         }
 
         this.append(new ChangePatternSelection(doc, newStart, newEnd));
-        const draggedNotes = [];
+        const draggedNotes: Note[] = [];
         let noteInsertionIndex: number = 0;
         let i: number = 0;
         while (i < pattern.notes.length) {

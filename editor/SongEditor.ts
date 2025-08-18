@@ -41,6 +41,8 @@ import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { VisualLoopControlsPrompt } from "./Prompts/VisualLoopControlsPrompt";
 import { InstrumentVolumeRow, PanDelayRow, PanSliderRow, PresetSettingsRow } from "./Components/Rows"
 import { Importable, ImportableArgs } from "./Prompts/Importable"
+import { PresetsEditor, UserPreset } from "./UserPresets/PresetsEditor";
+import { Select2 } from './Components'
 
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
@@ -64,7 +66,7 @@ function buildHeaderedOptions(header: string, menu: HTMLSelectElement, items: Re
     return menu;
 }
 
-function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement {
+function buildPresetOptions(isNoise: boolean, idSet: string, userPresets: PresetsEditor): HTMLSelectElement {
     const menu: HTMLSelectElement = select({ id: idSet, class: "presetSelect"});
 
 
@@ -87,8 +89,8 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
         menu.appendChild(option({ value: InstrumentType.noise }, EditorConfig.valueToPreset(InstrumentType.noise)!.name));
     }
 
-    // TODO - When you port over the Dogebox2 import/export buttons be sure to uncomment these
-    const randomGroup: HTMLElement = optgroup({ label: "Randomize ▾" });
+    // This builds out the randomize group
+    const randomGroup: HTMLElement = optgroup({ label: "Randomize" });
     // const randomGroup: HTMLElement = optgroup({ label: "▾ Randomize" });
     randomGroup.appendChild(option({ value: "randomPreset" }, "Random Preset"));
     randomGroup.appendChild(option({ value: "randomGenerated" }, "Random Generated"));
@@ -97,14 +99,20 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
     let firstCategoryGroup: HTMLElement | null = null;
     let customSampleCategoryGroup: HTMLElement | null = null;
 
+    // This builds out the default preset categories
     for (let categoryIndex: number = 1; categoryIndex < EditorConfig.presetCategories.length; categoryIndex++) {
         const category: PresetCategory = EditorConfig.presetCategories[categoryIndex];
-        const group: HTMLElement = optgroup({ label: category.name + " ▾" });
-        // const group: HTMLElement = optgroup({ label: "▾ " + category.name });
+        console.log(category)
+        // Makes an optgroup for each category
+        const group: HTMLElement = optgroup({ label: category.name + "" });
+
+        // Assumes that the category has no instruments
         let foundAny: boolean = false;
+        
         for (let presetIndex: number = 0; presetIndex < category.presets.length; presetIndex++) {
             const preset: Preset = category.presets[presetIndex];
-            if ((preset.isNoise == true) == isNoise) {
+            console.log(preset.name, !!preset.isNoise == isNoise)
+            if ((!!preset.isNoise) == isNoise) {
                 group.appendChild(option({ value: (categoryIndex << 6) + presetIndex }, preset.name));
                 foundAny = true;
             }
@@ -150,6 +158,14 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
         parent.insertBefore(customSampleCategoryGroup, firstCategoryGroup);
     }
 
+    // User presets
+    for (const collection of userPresets.presets) {
+        const group: HTMLElement = optgroup({ label: `${collection.name}` });
+        for (const preset of collection.presets.filter((p: UserPreset) => p.instrument["isDrum"] == isNoise)) {
+            group.appendChild(option({ value: collection.name + "/" + preset.name }, preset.name))
+        }
+        menu.append(group)
+    }
     return menu;
 }
 
@@ -713,7 +729,9 @@ export class SongEditor {
     public prompt: Prompt | null = null;
 
     public doc: SongDocument = new SongDocument();
+    public _selectedUserPreset: string = "";
 
+    private readonly _presetsEditor: PresetsEditor = new PresetsEditor();
     private readonly _keyboardLayout: KeyboardLayout = new KeyboardLayout(this.doc);
     private readonly _patternEditorPrev: PatternEditor = new PatternEditor(this.doc, false, -1);
     private readonly _patternEditor: PatternEditor = new PatternEditor(this.doc, true, 0);
@@ -873,8 +891,15 @@ export class SongEditor {
     private readonly _echoDelaySlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoDelayRange - 1, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEchoDelay(this.doc, oldValue, newValue), false);
     private readonly _echoDelayRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("echoDelay") }, "Echo Delay:"), this._echoDelaySlider.container);
     private readonly _rhythmSelect: HTMLSelectElement = buildOptions(select(), Config.rhythms.map(rhythm => rhythm.name));
-    private readonly _pitchedPresetSelect: HTMLSelectElement = buildPresetOptions(false, "pitchPresetSelect");
-    private readonly _drumPresetSelect: HTMLSelectElement = buildPresetOptions(true, "drumPresetSelect");
+
+    public _whenSetPitchedPreset = (): void => {
+        this._setPreset($('#pitchPresetSelect').val() + "");
+    }
+    public _whenSetDrumPreset = (): void => {
+        this._setPreset($('#drumPresetSelect').val() + "");
+    }
+    public readonly _pitchedPresetSelect: Select2 = new Select2(this, buildPresetOptions(false, "pitchPresetSelect", this._presetsEditor), this._whenSetPitchedPreset)
+    private readonly _drumPresetSelect: Select2 = new Select2(this, buildPresetOptions(true, "drumPresetSelect", this._presetsEditor), this._whenSetDrumPreset)
     private readonly _algorithmSelect: HTMLSelectElement = buildOptions(select(), Config.algorithms.map(algorithm => algorithm.name));
     private readonly _algorithmSelectRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("algorithm") }, "Algorithm: "), div({ class: "selectContainer" }, this._algorithmSelect));
     private readonly _instrumentButtons: HTMLButtonElement[] = [];
@@ -1231,8 +1256,8 @@ export class SongEditor {
     private readonly _instrumentTypeSelectRow: HTMLDivElement = div({ class: "selectRow", id: "typeSelectRow" },
         span({ class: "tip", onclick: () => this._openPrompt("instrumentType") }, "Type:"),
         div( 
-            div({ class: "pitchSelect" }, this._pitchedPresetSelect),
-            div({ class: "drumSelect" }, this._drumPresetSelect)
+            div({ class: "pitchSelect" }, this._pitchedPresetSelect.container),
+            div({ class: "drumSelect" }, this._drumPresetSelect.container)
         ),
     );
     private readonly _instrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
@@ -2432,22 +2457,22 @@ export class SongEditor {
             this._usageCheck(this.doc.channel, instrumentIndex);
 
             if (this.doc.song.getChannelIsNoise(this.doc.channel)) {
-                this._pitchedPresetSelect.style.display = "none";
-                this._drumPresetSelect.style.display = "";
+                this._pitchedPresetSelect.container.style.display = "none";
+                this._drumPresetSelect.container.style.display = "";
                 // Also hide select2
                 $("#pitchPresetSelect").parent().hide();
                 $("#drumPresetSelect").parent().show();
 
-                setSelectedValue(this._drumPresetSelect, instrument.preset, true);
+                setSelectedValue(this._drumPresetSelect.container, instrument.preset, true);
             } else {
-                this._pitchedPresetSelect.style.display = "";
-                this._drumPresetSelect.style.display = "none";
+                this._pitchedPresetSelect.container.style.display = "";
+                this._drumPresetSelect.container.style.display = "none";
 
                 // Also hide select2
                 $("#pitchPresetSelect").parent().show();
                 $("#drumPresetSelect").parent().hide();
 
-                setSelectedValue(this._pitchedPresetSelect, instrument.preset, true);
+                setSelectedValue(this._pitchedPresetSelect.container, instrument.preset, true);
             }
 
             if (instrument.type == InstrumentType.noise) {
@@ -2950,8 +2975,8 @@ export class SongEditor {
         else {
             this._usageCheck(this.doc.channel, instrumentIndex);
 
-            this._pitchedPresetSelect.style.display = "none";
-            this._drumPresetSelect.style.display = "none";
+            this._pitchedPresetSelect.container.style.display = "none";
+            this._drumPresetSelect.container.style.display = "none";
             $("#pitchPresetSelect").parent().hide();
             $("#drumPresetSelect").parent().hide();
             if (prefs.instrumentButtonsAtTop) {
@@ -4934,6 +4959,17 @@ export class SongEditor {
         this.refocusStage();
     }
 
+    private _pasteUserPreset = (name: string, group: string): void => {
+        console.log("pasting user preset")
+        const channel: Channel = this.doc.song.channels[this.doc.channel];
+        const instrument: Instrument = channel.instruments[this.doc.getCurrentInstrument()];
+        const instrumentCopy: UserPreset|null = this._presetsEditor.getPreset(name, group)
+        if (!instrumentCopy) return;
+        if (instrumentCopy != null && instrumentCopy.instrument["isDrum"] == this.doc.song.getChannelIsNoise(this.doc.channel) && instrumentCopy.instrument["isMod"] == this.doc.song.getChannelIsMod(this.doc.channel)) {
+            this.doc.record(new ChangePasteInstrument(this.doc, instrument, instrumentCopy.instrument));
+        }
+        this.refocusStage();
+    }
     private _exportInstruments = (): void => {
         this._openPrompt("exportInstrument");
     }
@@ -5024,33 +5060,36 @@ export class SongEditor {
         var selfRef = this;
         setTimeout(function () { selfRef.mainLayer.focus(); }, 20);
     }
-
-    public _whenSetPitchedPreset = (): void => {
-        this._setPreset($('#pitchPresetSelect').val() + "");
-    }
-
-    public _whenSetDrumPreset = (): void => {
-        this._setPreset($('#drumPresetSelect').val() + "");
-    }
+// penis
+    
 
     private _setPreset(preset: string): void {
         if (isNaN(<number><unknown>preset)) {
             switch (preset) {
                 case "copyInstrument":
                     this._copyInstrument();
+                    this._savePreset.deselectPreset()
                     break;
                 case "pasteInstrument":
                     this._pasteInstrument();
+                    this._savePreset.deselectPreset()
                     break;
                 case "randomPreset":
                     this._randomPreset();
+                    this._savePreset.deselectPreset()
                     break;
                 case "randomGenerated":
                     this._randomGenerated(false);
+                    this._savePreset.deselectPreset()
                     break;
+                default:
+                    const [group, userPreset] = preset.split("/")
+                    console.log(group, userPreset)
+                    this._pasteUserPreset(userPreset, group)
             }
             this.doc.notifier.changed();
         } else {
+            this._savePreset.deselectPreset()
             this.doc.record(new ChangePreset(this.doc, parseInt(preset)));
         }
     }
@@ -5546,5 +5585,27 @@ export class SongEditor {
         this._customWavePresetDrop.selectedIndex = 0;
         this.doc.notifier.changed();
         this.doc.prefs.save();
+    }
+
+    public rebuildDrumPresetsMenu = (): void => {
+
+    }
+    public savePreset = (name: string) => {
+        const instrument = this.doc.getCurrentInstrument()
+        if (this.doc.song.channels[this.doc.channel].instruments[instrument]) {
+            const channel: Channel = this.doc.song.channels[this.doc.channel];
+            const instrumentData: any = channel.instruments[instrument].toJsonObject();
+            instrumentData["isDrum"] = this.doc.song.getChannelIsNoise(this.doc.channel);
+            instrumentData["isMod"] = this.doc.song.getChannelIsMod(this.doc.channel);
+            const presetData: UserPreset = {
+                name,
+                instrument: instrumentData
+            }
+            this._presetsEditor.addPreset(presetData, "My Presets")
+            this._pitchedPresetSelect.addOption(option({ value: "My Presets/" + name}, name), "My Presets")
+            this._savePreset.selectPreset(name);
+            this.whenUpdated()
+            this.refocusStage();
+        }
     }
 }

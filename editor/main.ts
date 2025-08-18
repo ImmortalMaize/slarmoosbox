@@ -10,7 +10,6 @@ import { SongDocument } from "./SongDocument";
 import { ExportPrompt } from "./Prompts/ExportPrompt";
 import { ChangePreset } from "./changes";
 
-
 //namespace beepbox {
 const editor: SongEditor = new SongEditor();//same as above
 
@@ -28,56 +27,56 @@ editor.mainLayer.getElementsByClassName("trackAndMuteContainer")[0].className +=
 editor.mainLayer.getElementsByClassName("barScrollBar")[0].className += " load";
 
 // Give select2 class to these
-$('#pitchPresetSelect').select2({ dropdownAutoWidth: true });
-$('#drumPresetSelect').select2({ dropdownAutoWidth: true });
+// $('#pitchPresetSelect').select2({ dropdownAutoWidth: true });
+// $('#drumPresetSelect').select2({ dropdownAutoWidth: true });
 // $('#envelopeSelect').select2({ dropdownAutoWidth: true });
-
+editor._pitchedPresetSelect.init()
 // Onclick event to expand/collapse optgroups
 $("body").on('click', '.select2-container--open .select2-results__group', function () {
     $(this).siblings().toggle();
 });
 
 // Open event to collapse all optgroups by default
-$("#pitchPresetSelect").on('select2:open', function () {
-    $('.select2-dropdown--below').css('opacity', 0);
-    $('.select2-dropdown').css('opacity', 1);
-    $('#pitchPresetSelect')
-    setTimeout(() => {
-        let groups = $('.select2-container--open .select2-results__group');
-        let options = $('.select2-container--open .select2-results__option');
+// $("#pitchPresetSelect").on('select2:open', function () {
+//     $('.select2-dropdown--below').css('opacity', 0);
+//     $('.select2-dropdown').css('opacity', 1);
+//     $('#pitchPresetSelect')
+//     setTimeout(() => {
+//         let groups = $('.select2-container--open .select2-results__group');
+//         let options = $('.select2-container--open .select2-results__option');
 
-        $.each(groups, (index, v) => {
-            $(v).siblings().hide();
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-        })
-        $.each(options, (index, v) => {
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-        })
+//         $.each(groups, (index, v) => {
+//             $(v).siblings().hide();
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+//         })
+//         $.each(options, (index, v) => {
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+//         })
 
-        $('.select2-dropdown--below').css('opacity', 1);
-    }, 0);
-});
+//         $('.select2-dropdown--below').css('opacity', 1);
+//     }, 0);
+// });
 
 // Open event to collapse all optgroups by default
-$("#drumPresetSelect").on('select2:open', function () {
-    $('.select2-dropdown--below').css('opacity', 0);
-    $('.select2-dropdown').css('opacity', 1);
-    $('#drumPresetSelect')
-    setTimeout(() => {
-        let groups = $('.select2-container--open .select2-results__group');
-        let options = $('.select2-container--open .select2-results__option');
+// $("#drumPresetSelect").on('select2:open', function () {
+//     $('.select2-dropdown--below').css('opacity', 0);
+//     $('.select2-dropdown').css('opacity', 1);
+//     $('#drumPresetSelect')
+//     setTimeout(() => {
+//         let groups = $('.select2-container--open .select2-results__group');
+//         let options = $('.select2-container--open .select2-results__option');
 
-        $.each(groups, (index, v) => {
-            $(v).siblings().hide();
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-        })
-        $.each(options, (index, v) => {
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
-        })
+//         $.each(groups, (index, v) => {
+//             $(v).siblings().hide();
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+//         })
+//         $.each(options, (index, v) => {
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor.doc.song, editor.doc.channel).primaryNote + ";");
+//         })
 
-        $('.select2-dropdown--below').css('opacity', 1);
-    }, 0);
-});
+//         $('.select2-dropdown--below').css('opacity', 1);
+//     }, 0);
+// });
 
 //Open event to collapse all optgroups by default
 // $("#envelopeSelect").on('select2:open', function () {
@@ -102,11 +101,11 @@ $("#drumPresetSelect").on('select2:open', function () {
 
 // Select2 events
 // The latter is to ensure select2 doesn't keep focus after the select2 is closed without making a selection.
-$('#pitchPresetSelect').on("change", editor._whenSetPitchedPreset);
-$('#pitchPresetSelect').on("select2:close", editor._refocus);
+// $('#pitchPresetSelect').on("change", editor._whenSetPitchedPreset);
+// $('#pitchPresetSelect').on("select2:close", editor._refocus);
 
-$('#drumPresetSelect').on("change", editor._whenSetDrumPreset);
-$('#drumPresetSelect').on("select2:close", editor._refocus);
+// $('#drumPresetSelect').on("change", editor._whenSetDrumPreset);
+// $('#drumPresetSelect').on("select2:close", editor._refocus);
 
 // $('#envelopeSelect').on("change", (change: Event) => { editor.envelopeEditor.whenSetEnvelopePreset(change) });
 // $('#envelopeSelect').on("select2:close", editor._refocus);
